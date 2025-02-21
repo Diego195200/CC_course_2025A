@@ -44,7 +44,7 @@ Importar -> Ordenar-> Ciclo(Comprender(Transformar -> visualizar -> Modelar)) ->
 * Tibbles: versión mejorada del DataFrame, proporcionada por la paqueteria *tibble*
 
 
-# hoy
+# 17-02-25
 
 ## Packages
 

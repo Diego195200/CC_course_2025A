@@ -58,3 +58,4 @@ top_5_claims <- dataCar %>%
 head(top_5_claims, 5)
 
 # write.csv(dataCar, "datacar.csv")
+
