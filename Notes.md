@@ -57,4 +57,48 @@ Importar -> Ordenar-> Ciclo(Comprender(Transformar -> visualizar -> Modelar)) ->
 
 **Factor**: variable categórica
 
-	
+# UNIDAD II  17/02/25
+
+**EDA: Analisis exploratorio de datos (Exploratory Data Analysis)**
+Ciclo iterativo en el que:
+* generas preguntas
+
+**objetivo**:
+
+indicar posibles errores (datos incorrectamente introducidos, detectar la ausencia de valores o una mala decodificación)
+
+**Pasos**:
+
+Se puede dividir en 3 grandes pasos y estos a su vez se subdividen en muchsa tareas que se deben realizar para empezar a interpretar los resultados
+
+* Carga de los datos
+
+* Limpieza de datos: Eliminar duplicados, tratar valores nulos, verificar tipos de datos
+
+	Registros duplicados. si hay un registro repetido 10 veces y el modelo se equivoca en su predicción, se estará equivocando
+   10 veces por un solo registro. En algunos casos puede hacerse *oversampling* 
+
+
+# 24/02/25
+
+3. **Visualización**: Fase en la que se asocia con el EDA, ya que se tiene un data set limpio y funcional, solo queda
+explorarlo, visualizar la distribución de las variables numéricas, explor los recuentos de las variables categóricas,
+aplicar análisis estadísticos 
+
+Hay cinco tareas que se repiten en este proceso:
+
+- split-apply-combine: consiste en separar un problema en secciones (de acuerdo a una variable de inteŕes) , operar sobre cada subconjunto
+de manera independiente (ej. calcular la media de cada grupo, ordenar observaciones por grupo, estandarizar por grupo) y despues unir las secciones nuevamente
+Las funciones en R son:
+
+From dplyr:
+* `select`: Select variables/columns
+* `filter`: select observations/rows
+* `mutate`: Transform or rename columns
+* `summarize`: crea DataFrames oara resumir datos
+* `arrange`: reorder the observartions, rows
+* `group_by`: make subgroups
+
+From tidyr:
+
+
