@@ -102,3 +102,7 @@ From dplyr:
 From tidyr:
 
 
+Analisis univariante
+
+Surgen algunas cuestiones, tales como, se debe explorar todas las variables por si mismas, cómo se distribuyen, cuáles son relevantes
+

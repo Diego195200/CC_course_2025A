@@ -1,0 +1,10 @@
+
+
+! kpathsea: Running mktexfmt pdflatex.fmt
+! mktexfmt: mktexfmt is using the following fmtutil.cnf files (in precedence order):
+! mktexfmt: mktexfmt is using the following fmtutil.cnf file for writing changes:
+! mktexfmt:   /var/home/diegob/.texlive2023/texmf-config/web2c/fmtutil.cnf
+! mktexfmt [INFO]: writing formats under /var/home/diegob/.texlive2023/texmf-var/web2c
+! mktexfmt [INFO]: Did not find entry for byfmt=pdflatex skipped
+! mktexfmt [INFO]: total formats: 0
+! mktexfmt [INFO]: exiting with status 0

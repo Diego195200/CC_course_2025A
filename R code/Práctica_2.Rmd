@@ -1,0 +1,200 @@
+---
+title: "Practica 2"
+author: "Diego Isau Barranco Herrera"
+date: "2025-02-28"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+#Colocar todas las librerías 
+library(ggplot2)
+library(dplyr)
+library(janitor)
+library(modeest)
+library(zoo)
+```
+
+# Importación de la base
+
+```{r}
+data <- read.csv('/var/home/diegob/Documents/Computer Science/R code/data_prac_2 1.csv')
+data <- subset(data, select = -X)
+head(data, 10)
+```
+
+# Limpieza de la base
+
+1. Vamos a verificar primero la consistencia de los datos en cada columna, en caso de que existan valores diferentes,
+reemplazamos con `NA`
+Usamos la función `distinct` para extraer el rango de datos de cada columna e identificar lo que no pertenecen a la base
+** ¿Por qué no usar `which(is.na(dataCar), arr.ind = TRUE)`? Por la heterogeneidad de datos, es diferente tener "null" a un NA
+
+
+```{r}
+data %>% distinct(edad)
+data %>% distinct(sexo)
+data %>% distinct(imc)
+data %>% distinct(hijos)
+data %>% distinct(fumador)
+data %>% distinct(region)
+data %>% distinct(clm)
+
+
+```
+
+Se presentan valores como "", "$$", "&&", "null"
+Vamos a tomar ventaja de que los datos son de tipo carácter para hacer la sustitución de los valores con NA desde el importe de la base
+
+```{r}
+data <- read.csv('/var/home/diegob/Documents/Computer Science/R code/data_prac_2 1.csv', na.strings = c("", "$$", "&&", "null", stringsAsFactor = FALSE))
+data <- data %>% select(-X)
+head(data, 10)
+```
+
+Ahora vamos a verificar los tipos de datos
+
+```{r}
+sapply(data, class)
+```
+
+Listo, tenemos los tipos de datos adecuados
+
+Verificando cuántos valores faltantes hay
+
+```{r}
+colSums(is.na(data))
+```
+Sólamente nos preocuparemos para las variables numéricas, reemplazándolas por alguna técnica vista en clase
+
+2. Vamos a verificar valores duplicados
+
+```{r}
+data %>% janitor::get_dupes()
+```
+
+Existen valores duplicados, sin embargo, las variables disponibles en el base, puede que no sirvan como identificador
+porque puede haber relaciones uno a muchos, propondría agregar una variable más, por ejemplo un número de póliza,
+o usando las variables existentes una combinación de imc y clm como columna identificadora
+
+```{r}
+# quitando duplicados
+data <- unique(data)
+head(data, 10)
+```
+3. Reemplazando valores faltantes usando media, mediana, media recortada, moda, interpolación
+
+```{r}
+data_numeric <- data %>% select(where(is.numeric))
+head(data_numeric,10)
+```
+
+## Reemplazo con media
+
+```{r}
+data_mean <- data.frame(lapply(data_numeric, function (x) ifelse(is.na(x), mean(x, na.rm=TRUE), x)))
+summary(data_mean)
+```
+## Reemplazando con mediana
+
+```{r}
+data_median <- data.frame(lapply(data_numeric, function (x) ifelse(is.na(x), median(x, na.rm=TRUE), x)))
+summary(data_median)
+```
+
+## Reemplazando con media recortada
+
+```{r}
+data_median_cut <- data.frame(lapply(data_numeric, function (x) ifelse(is.na(x), mean(x, na.rm=TRUE, trim = 0.2), x)))
+summary(data_median_cut)
+```
+
+## Reemplazando con moda
+
+```{r}
+data_mode <-  data.frame(lapply(data_numeric, function (x) ifelse(is.na(x), mfv(x, na_rm=TRUE, trim = 0.1), x)))
+summary(data_mode)
+```
+
+## Reemplazando con interpolación
+
+```{r}
+data_interpol <- data.frame(lapply(data_numeric, function (x) ifelse(is.na(x), na.approx(x, na.rm=T), x)))
+summary(data_interpol)
+```
+
+La mediana podría ser candidata como técnica de reemplazo porque no difiere mucho de los datos originales
+
+# Usando la base con interpolación
+
+```{r}
+ggplot(data_interpol, aes(x = edad)) +
+  geom_histogram(fill = "blue", color = "black") +
+  labs(title = "Edad de los asegurados", x="Edad", y="Frecuencia")+
+  theme_minimal()
+
+ggplot(data_interpol, aes(x = imc)) +
+  geom_histogram(fill = "blue", color = "black") +
+  labs(title = "IMC de los asegurados", x="IMC", y="Frecuencia")+
+  theme_minimal()
+
+ggplot(data_interpol, aes(x = hijos)) +
+  geom_histogram(fill = "blue", color = "black") +
+  labs(title = "Número de hijos", x="Cantidad de hijos", y="Frecuencia")+
+  theme_minimal()
+
+ggplot(data_interpol, aes(x = clm))+
+  geom_histogram(fill = "blue", color = "black") +
+  labs(title = "Reclamos ", x="cantidad de reclamo", y="Frecuencia")+
+  theme_minimal()
+```
+
+## media de monto de reclamación por sexo
+
+```{r}
+char_data <- data %>% select(sexo, fumador, region)
+data_interpol_all <- cbind(data_interpol, char_data)  # agregando las demás columnas
+
+mean_sex <- data_interpol_all %>%
+        group_by(sexo) %>%
+        summarise(claim_amount = mean(clm))
+
+mean_sex
+
+```
+
+## media de monto de reclamación por fumador y sexo
+```{r}
+mean_sex_smk <- data_interpol_all %>%
+        group_by(fumador, sexo) %>%
+        summarise(claim_amount = mean(clm))
+
+mean_sex_smk
+
+```
+
+## Región con mayor monto promedio de reclamación
+```{r}
+mean_region <- data_interpol_all %>%
+        group_by(region) %>%
+        summarise(claim_amount = mean(clm)) %>%
+  arrange(desc(claim_amount))
+
+mean_region
+```
+
+## etiquetando registros si el imc es mayor a 30
+
+```{r}
+data_interpol_label <- data_interpol_all %>%
+        mutate(clasificacion = ifelse(imc > 30, "obesidad", ""))
+head(data_interpol_label,10)
+```
+
+## Top 10 personas obesas
+
+```{r}
+obesas <- filter(data_interpol_label, data_interpol_label$clasificacion=='obesidad') %>% arrange(desc(imc))
+head(obesas, 10)
+```
