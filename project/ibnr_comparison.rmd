@@ -1,0 +1,950 @@
+---
+title: "Comparación métodos IBNR determínisticos y estocásticos en siniestros de Incendios en México de 2015 a 2023"
+author: "Barranco Herrera Diego Isau, Pineda Romero Jeyme"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+
+# {.tabset .tabset-fade}
+
+## Introducción
+
+La necesidad de certidumbre en la vida del humano se ha convertido en una de las prioridades de la sociedad moderna. La incertidumbre del futuro es un factor que puede afectar la toma de decisiones, por lo que la industria de seguros juega un papel importante en la vida de las personas y empresas.
+
+La industria de seguros se basa en la transferencia de riesgos de un individuo o empresa a una entidad aseguradora. La aseguradora recibe una prima a cambio de asumir el riesgo de que ocurra un evento incierto, como un accidente, un incendio o una enfermedad. La aseguradora se compromete a pagar una indemnización si el evento asegurado ocurre.
+
+Las aseguradoras al comprometerse a pagar cuando un evento ocurre, deben ser capaces de estimar con precisión sus obligaciones futuras, apepegandose a las regulaciones y normativas de la Comisión Nacional de Seguros y Fianzas (CNSF) y a las normativas internacionales para asegurar la solvencia de la empresa.
+
+Las reservas son una parte importante de la solvencia de una aseguradora; son fondos que la aseguradora mantiene para cubrir sus obligaciones futuras. Existen diversos tipos de reservas, pero una de las más utilizadas es Las reservas es la de los siniestros que han ocurrido pero aún no han sido reportados o pagados. La estimación de las reservas es un proceso complejo que requiere el uso de modelos matemáticos y estadísticos para predecir los pagos futuros
+
+En este proyecto se compararán tres métodos de estimación de las reservas IBNR (Incurred But Not Reported) para siniestros de incendio: el método determinístico Chain Ladder y los métodos estocásticos Bootstrap y Mack Chain Ladder. Se utilizará una base de datos de siniestros de incendio de la CNSF para estimar las reservas IBNR y comparar los resultados de los métodos.
+
+
+## Objetivo
+
+El objetivo de este proyecto es comparar tres métodos de estimación de las reservas IBNR para siniestros de incendio: el método determinístico Chain Ladder y los métodos estocásticos Bootstrap y Mack Chain Ladder.
+
+## Revisión de Teoría
+
+En el paper *"Comparison of Stochastic Claims Reserving Models in Insurance"* de Martinek, Arató y Mályusz se comparan diversos modelos estocásticos utilizados en la estimación de reservas. Los modelos analizados incluyen:
+
+* Chain Ladder tradicional: Basado en patrones históricos de desarrollo.
+
+* Modelo de Mack: Extensión estocástica del Chain Ladder, que incorpora varianzas por año de desarrollo.
+
+* Bootstrap Chain Ladder: Método de remuestreo para cuantificar incertidumbre.
+
+* Modelos Lineales Generalizados (GLM): Permiten integrar variables explicativas adicionales.
+
+* Enfoques bayesianos: Utilizan información previa y actualizable estadísticamente.
+
+Metodología:
+
+Los autores combinan un análisis teórico de las propiedades de cada modelo con pruebas empíricas utilizando datos reales de siniestros. Evalúan precisión, capacidad predictiva, manejo de incertidumbre y complejidad computacional.
+
+Hallazgos clave:
+
+* Modelo de Mack: Confiable cuando los datos siguen supuestos del Chain Ladder, pero menos flexible ante desviaciones.
+
+* Bootstrap Chain Ladder: Destaca en cuantificar incertidumbre (intervalos de predicción) y adaptarse a variaciones.
+
+* GLMs: Ventajosos al incorporar covariables externas, ofreciendo mayor adaptabilidad.
+
+* Bayesianos: Potentes para datos complejos y contextos con información previa, aunque requieren recursos computacionales intensivos.
+
+Conclusiones:
+
+La elección del modelo depende de la naturaleza de los datos y los objetivos (ej., precisión vs. coste computacional). Los autores subrayan la importancia de:
+
+* Validar modelos con técnicas como validación cruzada.
+
+* Combinar enfoques (ej., Bootstrap con GLMs) para mejorar robustez.
+
+* Considerar el equilibrio entre complejidad y recursos disponibles, especialmente en modelos bayesianos.
+
+
+Existe otro estudio de Jackie Li, *"Comparison of Stochastic Reserving Methods"*
+
+Se utilizaron los siguientes criterios de comparación:
+
+* Precisión predictiva: Error en la estimación de reservas.
+
+* Estabilidad: Sensibilidad a outliers o cambios en los datos.
+
+* Transparencia: Interpretabilidad de los resultados.
+
+* Cumplimiento regulatorio: Adecuación a estándares como Solvencia II o IFRS 17.
+
+* Costo computacional: Recursos requeridos para implementación.
+
+Hallazgos clave:
+
+* Chain Ladder estocástico (Mack): Sólido en datos con patrones consistentes, pero subestima la incertidumbre si hay heterocedasticidad.
+
+* Bornhuetter-Ferguson: Superior en ramos con siniestralidad emergente lenta (ej., responsabilidad civil), al reducir dependencia de datos incompletos.
+
+* GLMs: Alta flexibilidad para modelar efectos de calendario o inflación, pero requieren ajuste cuidadoso para evitar sobreparametrización.
+
+* Métodos bayesianos: Ideales para integrar juicio experto o datos externos, aunque su complejidad limita su adopción en la práctica diaria.
+
+Conclusiones:
+
+* Elección del método: Depende del tipo de seguro (ej., corta vs. larga cola), calidad de los datos y requisitos regulatorios.
+
+* Híbridos: Combinar métodos (ej., GLM + bootstrap) puede equilibrar precisión y robustez.
+
+* Transparencia vs. complejidad: Métodos más sofisticados (bayesianos) ofrecen ventajas analíticas, pero deben justificarse ante reguladores y stakeholders.
+
+* Enfoque práctico: Li enfatiza la importancia de validación retrospectiva (backtesting) y escenarios de estrés para asegurar la confiabilidad de las reservas.
+
+
+## Analisis Exploratorio de Datos
+
+En el análisis de datos, una de las primeras tareas que se deben de realizar es el conocer la estructura de los datos, es decir, las variables que se tienen, el tipo de datos que contienen, la cantidad de registros, y las medidas descriptivas de las variables. Para poder realizar esta tarea, se debe de cargar la base de datos y verificar que haya normalización en toda la base, es decir que no haya valores nulos, que los datos estén en el formato correcto y que no haya errores en la captura de los datos. Vamos a realizar esta tarea con la base de datos de siniestros de incendio de la CNSF.
+
+### ¿Qué variables contiene la base de datos?
+
+Hemos recopilado la información de los catálogos de la CNSF para poder entender el significado de las variables. Nos servirá para hacer la limpieza de la base y poder realizar el Análisis Exploratorio de Datos
+
+-   `AÑO`: Indica el año en que ocurrió el siniestro
+-   `MONEDA`: Moneda con la cual se emitió la póliza.
+
+```{r table2, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+tabl <- "
+| Clave  | Moneda         |
+|:--------:|:-------------:|
+| 10      | Nacional|
+| 20     | Extranjera |
+| 30 | Indizada |
+"
+cat(tabl)
+```
+
+-   `FORMA DE VENTA`: Indica la manera que se vendió la póliza
+
+```{r table3, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+tabl <- "
+| Clave | Forma de Venta                     | Definición                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|-------|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 01    | Agentes Persona Física            | La distribución de los productos de seguros se realiza a través de una persona física que, mediante la celebración de un contrato con una aseguradora, actúa como intermediaria en la suscripción y administración de contratos de seguros.                                                                                                                                                                                                                                 |
+| 02    | Agentes Persona Moral             | La distribución de los productos de seguros se realiza a través de una persona moral que, mediante la celebración de un contrato con una aseguradora, actúa como intermediaria en la suscripción y administración de contratos de seguros.                                                                                                                                                                                                                                   |
+| 05    | Red de Sucursales Bancarias       | Suscripción de contratos de seguros mediante su oferta a través de ejecutivos o ventanillas bancarias.                                                                                                                                                                                                                                                                                                                                                                    |
+| 06    | Fuerza de Venta Interna o Casa Matriz | La distribución de los productos de seguros se realiza a través de los propios empleados de las empresas, sin que intervengan intermediarios, el teléfono o internet.                                                                                                                                                                                                                                                                                                      |
+| 07    | Módulos de Venta                  | Suscripción de contratos de seguros mediante su oferta por medio de lugares físicos de venta, pertenecientes a la aseguradora.                                                                                                                                                                                                                                                                                                                                            |
+| 08    | Telemercadeo                      | Suscripción de contratos de seguros mediante su oferta a través comunicación telefónica.                                                                                                                                                                                                                                                                                                                                                                                 |
+| 10    | Empresas Comerciales              | Suscripción de contratos de seguros mediante su oferta por medio de la estructura comercial de un tercero. Incluye seguros ofrecidos a través de facturas de servicios públicos y privados, u ofertados en supermercados, tiendas departamentales tiendas de autoservicio y electrodomésticos.                                                                                                                                                                             |
+| 11    | Concesionarios Automotrices       | Suscripción de contratos de seguros mediante su oferta por medio de la agencia o intermediario con la que se realizó la venta del automóvil.                                                                                                                                                                                                                                                                                                                              |
+| 12    | Internet                         | Suscripción de contratos de seguros directamente por los interesados a través de una página web, sin contar con un intermediario. Esta modalidad puede requerir que se concrete la compra por teléfono, pero el realizador de la llamada no promueve el producto.                                                                                                                                                                                                         |
+| 13    | Descuento por Nómina             | Suscripción de contratos de seguros mediante su oferta a los empleados de una empresa, independientemente del medio electrónico o canal utilizado.                                                                                                                                                                                                                                                                                                                        |
+| 14    | Microcréditos                    | Suscripción de contratos de seguros a microfinancieras cuyo fin principal es cubrir el microcrédito y/o el fallecimiento del acreditado y en su caso a sus beneficiarios.                                                                                                                                                                                                                                                                                                 |
+| 15    | Otros Canales de Venta Masiva     | Considera canales masivos que no se encuentran incluidos en las categorías anteriores (08 a 14). Asimismo, incluye la suscripción de contratos de seguros directamente por los interesados a través de insertos, tarjetas de regalo o cajeros automáticos (ATM´s). Esta modalidad puede requerir que concrete la compra por teléfono, pero el realizador de la llamada no promueve el producto.                                                                            |
+| 99    | Otra Forma de Venta               | Cualquier otra forma de venta que se considere ajena a las opciones anteriores. En caso de que se reporte en esta opción más del 1% de la Prima Emitida o del número de pólizas o asegurados/certificados/incisos/ubicaciones, se deberá aclarar por escrito cual es la forma de venta de estos seguros, para agregar las opciones que sean necesarias en este catálogo.                                                                                                  |
+"
+cat(tabl)
+```
+
+-   `GIRO`: Tipo de empresa Puede consultar el cátalogo en el siguiente link: [Cátalogo 4, Giros](https://www.cnsf.gob.mx/Sistemas/Informacin%20Estadstica/RR-8%20Cat%C3%A1logo%204%20Giro%202024.docx)
+-   `NUMERO DE NIVELES`: Número total de niveles del edificio, incluyendo sótanos
+
+
+-   `ENTIDAD`: la entidad federativa-municipio en donde se encuentra el bien o inmueble asegurado: [Catálogo 16.2](https://www.cnsf.gob.mx/Sistemas/Informacin%20Estadstica/RR-8%20Cat%C3%A1logo%2016.2%20Entidad%20y%20Municipio%20excepto%20Terremoto%20y%20Diversos%20Construcci%C3%B3n%20y%20Montaje%202024.docx)
+-   `SUBTIPO DE SEGURO`: Subtipo de seguro que corresponda al negocio asegurado
+
+```{r table5, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+tabl <- "
+| Clave | Subtipo de Seguro       | Definición                                                                                                      |
+|-------|-------------------------|----------------------------------------------------------------------------------------------------------------|
+| 0     | Otro                    |                                                                                                                |
+| 1     | Microseguro             | Microseguros, pólizas que corresponden a productos registrados de acuerdo con la normativa vigente.            |
+| 2     | Negocio gubernamental   | Es el seguro que es contratado por el gobierno federal, estatal, municipal y sus empresas paraestatales para cubrir bienes propios. |
+| 3     | Seguro obligatorio      | Seguros que deben ser comprados al ser dictados por una ley, reglamento u otro tipo de normativa.              |
+| 4     | Pymes                   | Seguros contratados por PyMEs para la protección de sus bienes.                                                |
+"
+
+cat(tabl)
+```
+
+-   `TIPO DE BIEN`: La clave del bien que se está asegurando
+
+```{r table6, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+tabl <- "
+| Clave | Tipo de bien                                      |
+|-------|--------------------------------------------------|
+| 1     | Edificio                                         |
+| 2     | Contenidos                                       |
+| 3     | Pérdidas Consecuenciales                        |
+| 4     | Existencias / Bienes Bajo Convenio Expreso       |
+| 5     | Contenidos y Edificio                           |
+| 6     | Contenidos, Existencias / Bienes Bajo Convenio Expreso |
+| 7     | Contenidos y Pérdidas Consecuenciales            |
+| 8     | Edificio y Pérdidas Consecuenciales             |
+| 9     | Otra combinación / Otros                        |
+"
+
+cat(tabl)
+```
+
+-   `COBERTURA`: Cada una de las coberturas de la póliza, afectadas por el siniestro
+
+```{r table7, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+tabl <- "
+| Clave | Cobertura                                      |
+|-------|-----------------------------------------------|
+| 01    | Bienes en cuartos o aparatos refrigerados o en incubadoras |
+| 02    | Combustión Espontánea                          |
+| 03    | Derrame de Material Fundido                    |
+| 04    | Derrame de Protecciones contra Incendio        |
+| 05    | Extensión de cubierta (sin inundación)         |
+| 06    | Ganancias Brutas                               |
+| 07    | Gastos Extraordinarios                         |
+| 08    | Gastos Extras para Casa Habitación             |
+| 09    | Huelgas o Alborotos Populares                  |
+| 10    | Incendio, rayo y explosión                     |
+| 11    | Interdependencia                               |
+| 12    | Interrupción de Actividades Comerciales        |
+| 13    | Naves Aéreas, Vehículos y Humo                 |
+| 14    | Pérdida de Rentas                              |
+| 15    | Pérdida de Utilidades, Gastos Fijos y Salarios |
+| 16    | Remoción de Escombros                          |
+| 17    | Seguro Contingente                             |
+| 18    | Todo Riesgo                                    |
+| 19    | Cancelación de viaje, pérdida de maleta        |
+| 20    | Cobertura automática para incisos nuevos o no conocidos |
+| 21    | Endoso Inflacionario                           |
+| 22    | Gastos funerarios                              |
+| 23    | Seguro Flotante                                |
+| 24    | Terrorismo                                     |
+| 25    | Explosión                                      |
+| 99    | Otra cobertura                                 |
+"
+
+cat(tabl)
+```
+
+-   `CAUSA DEL SINIESTRO`: Causa que originó el siniestro.
+
+```{r table8, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+tabl <- "
+| Clave | Causa de siniestro                                      |
+|-------|---------------------------------------------------------|
+| 01    | Acción del Agua que no Provenga de las Condiciones Atmosféricas |
+| 02    | Actos de Personas Mal Intencionadas                      |
+| 03    | Auto Ignición                                            |
+| 04    | Caída de Antenas                                         |
+| 05    | Caída de Arboles                                         |
+| 06    | Caída de Avión                                           |
+| 07    | Caída de Maquinaria o sus Partes por Rotura de Cables    |
+| 08    | Caída de Nave Aérea y Objetos Caídos de Ellos            |
+| 09    | Cerillos y Cigarros                                      |
+| 10    | Corto circuito / Electricidad                            |
+| 11    | Derrame de Equipo Contra Incendio                        |
+| 12    | Derrame de Material Fundido                              |
+| 13    | Desechos orgánicos                                       |
+| 14    | Durante la soldadura y corte                             |
+| 15    | Explosión                                                |
+| 16    | Fallas en el Sistema de Refrigeración                    |
+| 17    | Falta de Suministro de Energía Eléctrica                 |
+| 18    | Fricción                                                 |
+| 19    | Guerra                                                   |
+| 20    | Huelgas, Alborotos Populares                             |
+| 21    | Humo o Tizne                                             |
+| 22    | Impacto de Vehículos                                     |
+| 23    | Material sobrecalentado                                 |
+| 24    | Conmoción Civil                                         |
+| 25    | Contenidos e Interior de los edificios por deficiencias en construcción |
+| 26    | Desbordamiento o Desviación de Corrientes o Depósitos Artificiales |
+| 27    | Descargas accidentales de agua o vapor                   |
+| 28    | Escape de Materias Inflamables o explosivas              |
+| 29    | Falta de Mantenimiento                                  |
+| 30    | Gastos Extraordinarios                                  |
+| 31    | Falta o insuficiencia de drenaje                        |
+| 32    | Incendio por Lluvia                                     |
+| 33    | Rayo                                                    |
+| 34    | Roturas de tuberías o sistemas de agua                  |
+| 35    | Remoción de Escombros                                   |
+| 36    | Combustión Espontánea                                   |
+| 37    | Corrosión en tubería                                    |
+| 38    | Daños en coladeras                                      |
+| 39    | Daños causados por impericia de trabajo                 |
+| 40    | Daños por derrame de sustancias químicas                |
+| 41    | Fenómenos de la naturaleza                              |
+| 42    | Fermentación                                            |
+| 43    | Pérdida de equpaje durante viaje                       |
+| 44    | Plaga de termitas                                       |
+| 45    | Rotura de techos, vidrios, paredes                     |
+| 46    | Vientos Tempestuosos                                    |
+| 99    | Otra causa                                              |
+"
+
+cat(tabl)
+```
+
+-   `MONTO DE SINIESTRO`: Monto del siniestro, neto de deducible y coaseguro, de los movimientos registrados durante el periodo de reporte, independientemente de la fecha de ocurrencia del siniestro. Este considera los importes de las reservas iniciales estimadas más/menos los ajustes a las reservas.
+-   `MONTO PAGADO`: total de los montos pagados al asegurado por concepto de siniestro, neto de coaseguro y deducible, durante el periodo de reporte.
+-   `MONTO DEL DEDUCIBLE`: Importe total a cargo del asegurado por deducible correspondiente a su participación en los siniestros pagados dentro del periodo del reporte
+-   `MONTO DE COASEGURO`: Importe total a cargo del asegurado por coaseguro correspondiente a su participación en los siniestros pagados dentro del periodo del reporte.
+-   `SALVAMENTO`: Monto obtenido por la Institución por concepto de salvamentos del siniestro ocurrido
+
+------------------------------------------------------------------------
+
+### Normalizando la base
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  fig.width = 12, 
+  fig.height = 8, 
+  out.width = "100%",
+  dpi = 300
+)
+```
+
+
+```{r}
+library(pacman)
+p_load(tidyverse, extraDistr, ChainLadder, stringi, knitr, DT, ggplot2, plotly, htmlwidgets)
+```
+
+Ahora que conocemos las variables vamos a normalizar y verificar tipos de datos o valores NA
+
+```{r}
+# Importando los datos y usando encoding latin por los acentos
+siniestros <- read.csv('/var/home/diegob/Documents/Computer Science/project/Incendio_Siniestros.csv',fileEncoding = "latin1", stringsAsFactors = FALSE)
+head(siniestros, 5)
+```
+
+```{r}
+sapply(siniestros, class)
+```
+
+Tipos de datos correctos, ahora valores nulos
+
+```{r}
+colSums(is.na(siniestros))
+```
+
+Vemos que las columnas `RECUPERACION.DE.SINIESTROS` Y `RECUPERACION.DE.REASEGURO` contienen NA, pero por el objetivo del proyecto esas columnas no nos serán de utilidad por lo que no requerirán de alguna técnica de reemplazamiento
+
+Vamos a extraer un subconjunto de las variables que nos interesan, a el igual que solo nos enfocaremos en las observaciones que tengan un monto de pago mayor a 0
+
+```{r}
+siniestros <- siniestros %>% select(-c(RECUPERACION.DE.REASEGURO, RECUPERACION.DE.TERCEROS, GASTO.DE.AJUSTE, MONTO.DE.DEDUCIBLE, MONTO.COASEGURO, MONTO.DE.SINIESTRO))
+
+siniestros <- siniestros %>% filter(MONTO.PAGADO > 0)
+```
+
+
+Ahora vamos a normalizar las variables: `MONEDA`, `FORMA.DE.VENTA`, `GIRO`, `NUMERO.DE.NIVELES`, `ENTIDAD`, `SUBTIPO.DE.SEGURO`, `TIPO.DE.BIEN`, `COBERTURA`, `CAUSA.DE.SINIESTRO` de acuerdo con el catálogo de RR-8 de la CNSF
+
+```{r}
+rango_valores <- lapply(siniestros, unique)
+```
+
+Vemos que algunos valores son los mismos, pero no hay consistencia en el regirstro de los datos. Necesitamos homogenizar los datos para poder realizar el análisis exploratorio de datos
+
+Hemos acordado eliminar acentos y pasar a minúsculas para evitar errores en la búsqueda de los valores o posible incompatibilidad de los datos en las funciones
+
+```{r}
+# MONEDA
+
+siniestros$MONEDA <- tolower(siniestros$MONEDA)
+
+# FORMA.DE.VENTA
+
+siniestros$FORMA.DE.VENTA <- stri_trans_general(siniestros$FORMA.DE.VENTA, "Latin-ASCII")  # Remover los acentos
+  
+siniestros$FORMA.DE.VENTA <- tolower(siniestros$FORMA.DE.VENTA)  # Pasar a minúsculas
+
+siniestros$FORMA.DE.VENTA <- ifelse(siniestros$FORMA.DE.VENTA == "fuerza venta interna o matriz", "fuerza de venta interna o casa matriz", siniestros$FORMA.DE.VENTA)
+
+siniestros$FORMA.DE.VENTA <- ifelse(siniestros$FORMA.DE.VENTA == "venta masiva", "otros canales de venta masiva", siniestros$FORMA.DE.VENTA)
+
+
+# GIRO
+
+  siniestros$GIRO <- stri_trans_general(siniestros$GIRO, "Latin-ASCII")  # Remover los acentos
+  
+  siniestros$GIRO <- tolower(siniestros$GIRO)  # Pasar a minúsculas
+  
+
+  siniestros$GIRO <- trimws(siniestros$GIRO, which = 'right')  # Remover espacios en blanco
+  
+  # Completando strings
+
+sectores <- c("agricultura, ganaderia, aprovechamiento forestal, pesca y caza",
+              "mineria",
+              "comercio al por mayor", 
+              "comercio al por menor", 
+              "construccion", 
+              "electricidad, agua y suministro de gas por ductos al consumidor final",
+              "industrias manufactureras", 
+              "informacion en medios masivos", 
+              "otros servicios excepto actividades del gobierno", 
+              "servicios de alojamiento temporal y de preparacion de alimentos y bebidas", 
+              "servicios de apoyo secretarial, fotocopiado, cobranza, investigacion",
+              "servicios educativos",
+              "servicios financieros y de seguros",
+              "servicios inmobiliarios y de alquiler de bienes muebles e intangibles",
+              "servicios profesionales, cientificos y tecnicos",
+              "direccion de corporativos y empresas",
+              "servicios de apoyo a los negocios y manejo de desechos y servicios de remediacion",
+              "servicios educativos",
+              "servicios de salud y de asistencia social",
+              "servicios de esparcimiento culturales y deportivos, y otros servicios recreativos",
+              "servicios de alojamoento temporal y de preparacion de alimentos y bebidas",
+              "otros servicios excepto actividades del gobierno",
+              "actividades del gobierno y de organismos internacionales y extraterritoriales",
+              "transportes, correos y almacenamiento", 
+              "vivienda", "oficina")
+    
+for (i in sectores) {
+  
+  pattern <- paste0("^", i, "\\s*\\s?\\((.*?)\\).*")
+  
+  siniestros$GIRO <- gsub(
+  pattern = pattern,
+  replacement = "\\1",
+  x = siniestros$GIRO
+)
+}
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de maquinaria y equipo para la industria metalmecani" , "fabricacion de maquinaria y equipo para la industria metalmecanica" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de herramientas de mano sin motor y utensilios de coc" , "fabricacion de herramientas de mano sin motor y utensilios de cocina metalicos " , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "alquiler de maquinaria y equipo industrial, comercial y de servic", "alquiler de maquinaria y equipo industrial, comercial y de servicios", siniestros$GIRO)
+  
+  siniestros$GIRO <- ifelse(siniestros$GIRO == "comercio al por menor de articulos de papeleria, libros y perio", "comercio al por menor de articulos de papeleria, libros y periodicos", siniestros$GIRO)
+  
+  siniestros$GIRO <- ifelse(siniestros$GIRO == "transmision de programas de radio y television, excepto a traves" , "transmision de programas de radio y television, excepto a traves de internet " , siniestros$GIRO)
+  
+  siniestros$GIRO <- ifelse(siniestros$GIRO == "telefonia tradicional, telegrafia y otras  telecomunicaciones ala" , "telefonia tradicional, telegrafia y otras  telecomunicaciones alambricas" , siniestros$GIRO)
+  
+   siniestros$GIRO <- ifelse(siniestros$GIRO == "vivienda (casa habitacion (credito hipotecario))", "casa habitacion (credito hipotecario)", siniestros$GIRO)
+
+   siniestros$GIRO <- ifelse(siniestros$GIRO == "servicios de apoyo secretarial, fotocopiado, cobranza, investiga" , "servicios de apoyo secretarial, fotocopiado, cobranza, investigacion" , siniestros$GIRO)
+
+   siniestros$GIRO <- ifelse(siniestros$GIRO == "alquiler de maquinaria y equipo industrial, comercial y de servic" , "alquiler de maquinaria y equipo industrial, comercial y de servicios" , siniestros$GIRO)
+
+   siniestros$GIRO <- ifelse(siniestros$GIRO == "comercio al por mayor de electrodomesticos menores y aparatos d" , "comercio al por mayor de electrodomesticos menores y aparatos de linea blanca" , siniestros$GIRO)
+
+   siniestros$GIRO <- ifelse(siniestros$GIRO == "comercio al por menor de articulos de ferreteria, tlapaleria y vi" , "comercio al por menor de articulos de ferreteria, tlapaleria y vidrios" , siniestros$GIRO)
+
+
+   siniestros$GIRO <- ifelse(siniestros$GIRO == "comercio al por menor de partes y refacciones para automoviles," , "comercio al por menor de partes y refacciones para automoviles, camionetas y camiones" , siniestros$GIRO)
+
+   siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de equipo y material para uso medico, dental y para" , "fabricacion de equipo y material para uso medico, dental y para laboratorio" , siniestros$GIRO)
+
+   siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de maquinaria y equipo para el comercio y los servi" , "fabricacion de maquinaria y equipo para el comercio y los servicios" , siniestros$GIRO)
+
+   siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de maquinaria y equipo para las actividades agropecua" , "fabricacion de maquinaria y equipo para las actividades agropecuarias, para la construccion y para la industria extractiva" , siniestros$GIRO)
+
+   siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de maquinaria y equipo para las industrias manufactu" , "fabricacion de maquinaria y equipo para las industrias manufactureras, 
+excepto la metalmecanica" , siniestros$GIRO)
+
+   siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de otra maquinaria y equipo para la industria en gen" , "fabricacion de otra maquinaria y equipo para la industria en general" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "otra actividad o servicio relacionada con la agricultura, ganade" , "otra actividad o servicio relacionada con la agricultura, ganaderia, aprovechamiento forestal, pesca y caza" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "parques con instalaciones recreativas y casas de juegos electroni" , "parques con instalaciones recreativas y casas de juegos electronicos" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "pensiones y casas de huespedes, y departamentos y casas amuebla" , "pensiones y casas de huespedes, y departamentos y casas amueblados con servicios de hotelería " , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "construccion de obras para el abastecimiento de agua, petroleo," , "construccion de obras para el abastecimiento de agua, petroleo, gas, electricidad y 
+telecomunicaciones " , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "edicion de periodicos, revistas, libros y similares, excepto a" , "edicion de periodicos, revistas, libros y similares, excepto a traves 
+de internet" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de motores de combustion interna, turbinas y transmi" , "fabricacion de motores de combustion interna, turbinas y transmisiones" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de otros productos de cuero, piel y materiales suceda" , "fabricacion de otros productos de cuero, piel y materiales sucedaneos" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de productos a base de arcillas y minerales refracta" , "fabricacion de productos a base de arcillas y minerales refractarios" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "reparacion y mantenimiento de equipo electr¢nico y de equipo de" , "reparacion y mantenimiento de equipo electronico y de equipo de precision " , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "servicios de arquitectura, ingenieria y actividades relacionada" , "servicios de arquitectura, ingenieria y actividades relacionadas" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "asilos y otras residencias para el cuidado de ancianos y discapa" , "asilos y otras residencias para el cuidado de ancianos y discapacitados" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "comercio al por menor de articulos para la decoracion de interio" , "comercio al por menor de articulos para la decoracion de interiores" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "escuelas comerciales, de computacion y de capacitacion para ejecu" , "escuelas comerciales, de computacion y de capacitacion para ejecutivos" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de equipo de generacion y distribucion de energia ele" , "fabricacion de equipo de generacion y distribucion de energia electrica" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de instrumentos de navegacion, medicion, medicos y" , "fabricacion de instrumentos de navegacion, medicion, medicos y de control" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "fabricacion de sistemas de aire acondicionado, calefaccion y de" , "fabricacion de sistemas de aire acondicionado, calefaccion y de refrigeracion industrial y comercial" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "otras instituciones de intermediacion crediticia y financiera no" , "otras instituciones de intermediacion crediticia y financiera no bursatil" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "reparacion y mantenimiento de maquinaria y equipo agropecuario," , "reparacion y mantenimiento de maquinaria y equipo agropecuario, industrial, comercial y de servicios" , siniestros$GIRO)
+
+siniestros$GIRO <- ifelse(siniestros$GIRO == "telefonia celular y otras telecomunicaciones inalambricas, exce" , "telefonia celular y otras telecomunicaciones inalambricas, excepto los servicios de satelites" , siniestros$GIRO)
+
+
+# NUMERO.DE.NIVELES
+
+siniestros$NUMERO.DE.NIVELES <- ifelse(siniestros$NUMERO.DE.NIVELES == "No disponible", "No Disponible", siniestros$NUMERO.DE.NIVELES)
+
+# ENTIDAD
+
+  # Minisculas
+siniestros$ENTIDAD <- tolower(siniestros$ENTIDAD)
+
+  # Remover acentos
+siniestros$ENTIDAD <- stri_trans_general(siniestros$ENTIDAD, "Latin-ASCII")
+
+  # cambiando strings
+
+siniestros$ENTIDAD <- ifelse(siniestros$ENTIDAD == "distrito federal", "ciudad de mexico", siniestros$ENTIDAD)
+
+siniestros$ENTIDAD <- ifelse(siniestros$ENTIDAD == "extranjero", "en el extranjero", siniestros$ENTIDAD)
+
+siniestros$ENTIDAD <- ifelse(siniestros$ENTIDAD == "mexico", "estado de mexico", siniestros$ENTIDAD)
+
+# SUBTIPO.DE.SEGURO
+
+siniestros$SUBTIPO.DE.SEGURO <- tolower(siniestros$SUBTIPO.DE.SEGURO)
+
+
+# TIPO.DE.BIEN
+
+siniestros$TIPO.DE.BIEN <- tolower(siniestros$TIPO.DE.BIEN)
+
+siniestros$TIPO.DE.BIEN <- stri_trans_general(siniestros$TIPO.DE.BIEN, "Latin-ASCII")
+
+
+siniestros$TIPO.DE.BIEN <- ifelse(siniestros$TIPO.DE.BIEN == "existencias / bienes bajo conv", "existencias / bienes bajo convenio expreso", siniestros$TIPO.DE.BIEN)
+
+
+siniestros$TIPO.DE.BIEN <- ifelse(siniestros$TIPO.DE.BIEN == "edificio y perdidas consecuenc", "edificio y perdidas consecuenciales", siniestros$TIPO.DE.BIEN)
+
+
+# COBERTURA
+siniestros$COBERTURA <- tolower(siniestros$COBERTURA)
+
+siniestros$COBERTURA <- stri_trans_general(siniestros$COBERTURA, "Latin-ASCII")
+
+# Tnemos valores con espacios en blanco al final
+siniestros$COBERTURA <- trimws(siniestros$COBERTURA, which = 'right') 
+    
+    # reemplazando "Bienes en cuartos o aparatos refrigerados o en inc" por "Bienes en cuartos o aparatos refrigerados o en incubadoras"
+    
+    siniestros$COBERTURA <- ifelse(siniestros$COBERTURA == "bienes en cuartos o aparatos refrigerados o en inc", "bienes en cuartos o aparatos refrigerados o en incubadoras", siniestros$COBERTURA)
+    
+    # reemplazando "Cobertura automàtica para incisos nuevos o no cono" por "Cobertura automatica para incisos nuevos o no conocidos" 
+    siniestros$COBERTURA <- ifelse(siniestros$COBERTURA == "cobertura automatica para incisos nuevos o no cono", "cobertura automatica para incisos nuevos o no conocidos", siniestros$COBERTURA)
+    
+# CAUSA.DE.SINIESTRO
+    
+     # Convertir a minúsculas
+siniestros$CAUSA.DEL.SINIESTRO <- tolower(siniestros$CAUSA.DEL.SINIESTRO)
+
+# Remover acentos
+siniestros$CAUSA.DEL.SINIESTRO <- stri_trans_general(siniestros$CAUSA.DEL.SINIESTRO, "Latin-ASCII")
+    
+# Completando strings
+siniestros$CAUSA.DEL.SINIESTRO <- ifelse(siniestros$CAUSA.DEL.SINIESTRO == "accion del agua que no provenga de las condiciones", "accion del agua que no provenga de las condiciones atmosfericas", siniestros$CAUSA.DEL.SINIESTRO)
+    
+    siniestros$CAUSA.DEL.SINIESTRO <- ifelse(siniestros$CAUSA.DEL.SINIESTRO == "caida de maquinaria o sus partes por rotura de cab", "caida de maquinaria o sus partes por rotura de cables", siniestros$CAUSA.DEL.SINIESTRO)
+    
+    siniestros$CAUSA.DEL.SINIESTRO <- ifelse(siniestros$CAUSA.DEL.SINIESTRO == "perdida de equpaje durante viaje", "perdida de equipaje durante el viaje", siniestros$CAUSA.DEL.SINIESTRO)
+
+    siniestros$CAUSA.DEL.SINIESTRO <- ifelse(siniestros$CAUSA.DEL.SINIESTRO == "desbordamiento o desviacion de corrientes o deposi", "desbordamiento o desviacion de corrientes o depositos artificiales", siniestros$CAUSA.DEL.SINIESTRO)
+
+    siniestros$CAUSA.DEL.SINIESTRO <- ifelse(siniestros$CAUSA.DEL.SINIESTRO == "contenidos e interior de los edificios por deficie", "contenidos e interior de los edificios por deficiencias en construccion", siniestros$CAUSA.DEL.SINIESTRO)
+
+
+# TIPO.PRIMER,RIESGO
+    siniestros$TIPO.PRIMER.RIESGO <- tolower(siniestros$TIPO.PRIMER.RIESGO)
+    
+
+```
+
+Veamos como queda la base de datos
+
+```{r}
+datatable(head(siniestros, 100))
+```
+
+Corroborando tipos de datos
+
+```{r}
+lapply(siniestros, class)
+```
+```{r}
+# convirtiendo numero de niveles
+siniestros$NUMERO.DE.NIVELES <- as.integer(siniestros$NUMERO.DE.NIVELES) # "no disponible" se convierte en NA
+```
+
+
+### Explorando la base de datos de los siniestros por incendio
+
+#### Estadisticas descriptivas
+
+```{r}
+summary(siniestros)
+```
+
+
+**Dispersión de los montos pagados por año**
+
+```{r}
+
+ggplot(siniestros, aes(x=AÑO, y=MONTO.PAGADO)) +
+  geom_point(bins = 30, fill = "blue", color = "black") +
+  labs(title = "Distribución de los montos pagados por año",
+       x = "Año",
+       y = "Monto pagado") +
+  theme(plot.title = element_text(face = "bold", size = 14, hjust = 0.5))
+
+```
+
+Observamos que hay valores atípicos en los años 2017 y 2018. ¿Cuáles son?
+
+```{r}
+siniestros %>% filter(MONTO.PAGADO > 1e+10)
+```
+
+Se trata de un siniestro ocurrido a una plataforma petrolera debido a un corto circuito.
+
+El otro siniestros igualmente a un inmueble relacionado con la fabricación de productos relacionados al petróleo
+
+Ahora realizemos preguntas de exploración
+
+* **¿Cúales son 10 los giros con más incendios?**
+
+```{r}
+
+group_giros <- siniestros %>% 
+  group_by(GIRO) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n)) %>% 
+  head(10)
+
+
+ggplot(group_giros, aes(x = n, y = reorder(GIRO, n))) +
+  geom_bar(stat = "identity", fill = "#1f77b4") +
+  geom_text(aes(label = n), hjust = -0.3, size = 3.5) +
+  labs(
+    title = "Top 10 giros con más siniestros",
+    x = "Número de siniestros",
+    y = "Giro"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),  # quitar lineas horizontales
+    axis.text.y = element_text(size = 7.5),
+    plot.title = element_text(face = "bold", size = 14)
+  ) +
+  expand_limits(x = max(group_giros$n) * 1.1)  # Space for labels
+
+```
+
+* **¿Cúal es la entidad con más siniestros?**
+
+```{r}
+group_entidad <- siniestros %>% 
+  group_by(ENTIDAD) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n))
+
+
+ggplot(group_entidad, aes(x = reorder(ENTIDAD, n), y = n)) +
+  geom_bar(stat = "identity", fill='blue') +
+  labs(title = "Siniestros por entidad",
+       x = "Entidad",
+       y = "Número de siniestros") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+```
+
+* **¿Cúales son las 10 coberturas más contratadas?**
+
+
+```{r}
+
+
+group_cobertura <- siniestros %>% 
+  group_by(COBERTURA) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n)) %>% 
+  head(10)
+
+ggplot(group_cobertura, aes(x =n,y= reorder(COBERTURA, n))) +
+  geom_bar(stat = "identity",  fill="#1f77b4") +
+  geom_text(aes(label = n), hjust = -0.3, size = 3.5) +
+  labs(title = "Top 10 coberturas contratadas",
+       x = "Frecuencia de la cobertura",
+       y = "Cobertura") +
+  theme(
+    panel.grid.major.y = element_blank(),  # quitar lineas horizontales
+    axis.text.y = element_text(size = 7.5),
+    plot.title = element_text(face = "bold", size = 14, hjust = 0.5)
+  )
+```
+
+* **¿Cuántos siniestros ocurrieron cada año?**
+
+```{r}
+siniestros_por_año <- siniestros %>%
+  group_by(AÑO) %>%
+  summarise(n = n())
+```
+```{r}
+ggplot(siniestros_por_año, aes(x = AÑO, y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Frecuencia de Siniestros por Año",
+       x = "Año",
+       y = "Número de Siniestros")+
+  theme(plot.title = element_text(face = "bold", size = 14, hjust = 0.5))
+```
+
+
+* **¿Cuáles son las 10 formas de ventas más frecuentes de las pólizas?**
+
+```{r}
+
+forma_venta_frecuente <- siniestros %>%
+  group_by(FORMA.DE.VENTA) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n)) %>%
+  head(10)
+
+ggplot(forma_venta_frecuente, aes(x = reorder(FORMA.DE.VENTA, n), y = n, fill = FORMA.DE.VENTA)) +
+  geom_bar(stat = "identity", color = "black", show.legend = FALSE) +
+  geom_text(aes(label = n), vjust = -0.5, color = "black", size = 4) +
+  labs(title = "Forma de Venta más Frecuente ",
+       x = "Forma de Venta",
+       y = "Número de Pólizas") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+        plot.title = element_text(hjust = 0.5),
+        axis.title = element_text(size = 12))
+ 
+```
+
+
+* **¿Cuál es el monto promedio pagado por tipo de bien asegurado?**
+
+```{r}
+monto_promedio_pagado_por_bien <- siniestros %>%
+  group_by(TIPO.DE.BIEN) %>%
+  summarise(promedio_monto = mean(MONTO.PAGADO, na.rm = TRUE))
+
+ggplot(monto_promedio_pagado_por_bien, aes(x = promedio_monto, y=reorder(TIPO.DE.BIEN, promedio_monto))) +
+  geom_bar(stat = "identity", color = "black") +
+  geom_text(aes(label = promedio_monto), hjust = -0.4, color = "black", size = 4) +
+  labs(title = "Monto Promedio Pagado por Tipo de Bien",
+       x = "", 
+       y = "Monto Promedio Pagado") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(), 
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))
+
+```
+
+
+
+  * **¿Cuáles son las 10 formas de venta que en promedio venden más? **
+
+```{r}
+forma_venta_promedio <- siniestros %>%
+  group_by(FORMA.DE.VENTA) %>%
+  summarise(promedio_monto = mean(MONTO.PAGADO, na.rm = TRUE)) %>%
+  arrange(desc(promedio_monto)) %>%
+  head(10)
+
+ggplot(forma_venta_promedio, aes(x = reorder(FORMA.DE.VENTA, promedio_monto), y = promedio_monto, fill = FORMA.DE.VENTA)) +
+  geom_bar(stat = "identity", color = "black") +
+  labs(title = "Monto Promedio Pagado por Forma de Venta",
+       x = "", 
+       y = "Monto Promedio Pagado") +
+  scale_fill_manual(values = RColorBrewer::brewer.pal(10, "Set3"), 
+                    name = "Forma de Venta",
+                    labels = paste(forma_venta_promedio$FORMA.DE.VENTA, " - $", scales::comma(forma_venta_promedio$promedio_monto))) +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),  
+        axis.title.x = element_blank(), 
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(size = 12),  
+        legend.text = element_text(size = 10))  
+```
+
+
+
+## Metodología
+
+### Construcción del triángulo de pérdidas acumuladas
+
+Para el próposito del proyecto vamos a trabajar con las variables `AÑO` y `MONTO.PAGADO`. Sin embargo, necesitamos de el **periodo de pago** para realizar el triángulo de pérdidas acumuladas y poder estimar las reservas IBNR
+
+### Construcción del triángulo de pérdidas acumuladas
+
+A falta de información vamos a simular el periodo de pago.
+
+Tenemos siniestros ocurridos de 2015 a 2023, es decir 8 años de información.
+
+Ocuperamos una distribución propia pero no informativa, en este caso una distribición uniforme para simular el factor de desarrollo D donde: $$
+D \sim Unif(0,8)
+$$
+
+```{r}
+# Selección variables de interés
+fechas_montos <- siniestros %>% select(AÑO, MONTO.PAGADO)
+
+# montos mayor a cero
+
+fechas_montos <- filter(fechas_montos, fechas_montos$MONTO.PAGADO > 0)
+
+# Añadiendo la columna D, para el año de desarrollo (fecha de pago)
+
+fechas_montos <- add_column(fechas_montos, D = as.integer(rdunif(nrow(fechas_montos), 0, 8)), .after = 1)
+
+# columna año de pago simulado AÑO + D
+fechas_montos <- fechas_montos %>% mutate(AÑO.PAGO = as.integer(rowSums((across(c(AÑO, D))))), .after = 2)
+
+```
+
+Hemos creado la simulación de fecha de pagos, pero existe un problema. Cada año debe tener un factor de desarrollo máximo. Por ejemplo, el año $2015$ puede tener como máximo $8$ porque $2015 + 8 = 2023$ la fecha donde tenemos información. De forma general $max D = 2023 - AÑO$. Vamos a arreglar ese problema
+
+```{r}
+fechas_montos <- fechas_montos %>%
+  mutate(
+    max_D = 2023 - AÑO,  # Max D permitido por cada AÑO
+    D = if_else(D <= max_D, D, NA_real_),
+    .after = 3
+  )
+```
+
+Ya hemos restrigido los factores de desarrollo para cada año ahora vamos a realizar la suma de cada año y factor de desarrollo
+
+```{r warning=FALSE}
+fechas_montos_agregados <- fechas_montos %>%
+  group_by(AÑO, D) %>%
+  summarise(MONTO.TOTAL = sum(MONTO.PAGADO, na.rm = TRUE))
+```
+
+Ya hemos completado la información, haremos uso de la paqueteria "ChainLadder" para construir el triangulo de montos
+
+```{r}
+# triangulo de forma incremental
+triangulo <- as.triangle(
+  fechas_montos_agregados,
+  origin = "AÑO",
+  dev = "D",
+  value = "MONTO.TOTAL"
+)
+triangulo
+```
+
+Necesitamos el triángulo de forma acumulada
+
+```{r}
+triangulo <- incr2cum(triangulo)
+triangulo
+plot(triangulo)
+```
+
+## Propuesta del modelo
+
+### Comprendiendo qué son los métodos de estimación de la reserva IBNR
+
+Las reservas IBNR (Incurred But Not Reported) representan una estimación de las obligaciones (pagos) de los siniestros que han ocurrido, pero aún no han sido reportados a la aseguradora.
+
+Es de vital importancia para las aseguradores tener los fondos suficientes (reservas) para esos pagos futuros. Sobreestimar las reservas podrían causar riesgo de insolvencia, caso contrario podría causar problemas de capital
+
+La experiencia de la aseguradora se basa en el conjunto de datos sobre los siniestros, en este caso de los montos pagados, fechas de siniestros y pagos, para usarlas y crear estimaciones siguiendo modelos matemáticos. Dichos datos se acomodan en un *triángulo*
+
+![Tríangulo](/var/home/diegob/Documents/Computer%20Science/project/tri.png)
+
+Ya hemos construido el triangulo inicial con los datos de la CNSF, ahora falta elegir un método para la zona de estimación
+
+### Chain Ladder
+
+Este metodo determinístico se basa en la suposición de que los patrones de desarrollo histórico continuarán en el futuro.
+
+Tenemos el conjunto de datos de la siguiente forma
+
+$$\begin{gathered}
+C_{1,1}, C_{1,2}, \ldots, C_{1,n} \\
+C_{2,1}, \ldots \ldots, C_{2,n-1} \\
+\vdots \\
+
+C_{n,1}
+
+\end{gathered}$$
+
+Donde $n$ es el número de periodos de siniestros. $C_{ij}$ es usado para denotar cantidades incrementales y $D_{ij}$ para cantidades acumulados, definido por: 
+
+$$D_{ij} = \sum_{k=1}^{j}C_{ij}$$
+
+Se estiman los reclamos acumulados *recursivamente* usando
+
+$$\hat{D}_{i, n-i+2} = D_{i, n-i+1} \hat{\lambda}_{n-i+2}$$
+
+y $\hat{D}_{i,j}= \hat{D}_{i,j-1} \hat{\lambda}_j$, para $j=n-i+3, n-i+4, \ldots n$
+
+Los factores de desarrollo estimados $\hat{\lambda}_j$ se dan con
+
+$$
+\hat{\lambda}\_j = \frac{\sum_{i=1}^{n-j+1} D_{ij}}{\sum_{i=1}^{n-j+1} D_{i,j-1}}
+$$
+**Parte 2 realizar código para los resultados**
+
+### Bootstrap Chain-Ladder
+
+El método Chain Ladder anterior puede ser mejorado con bootstraping, es decir, con un remuestreo de los residuales de los siniestros conocidos
+
+Los factores de desarrollo que se calculan desde el metodo básico anterior son usados para proyectar los montos acumualados del último periodo. Es caĺculo produce una media para los reclamos pasados y los residuales son calculados como la diferencia entre su media y el reclamo pasado. Estos residuales son usados para realizar un remuestreo de los montos acumulados y obtener nuevos datos para realizar el proceso nuevamente. Este proceso se repite cuantas veces sean necesario para obtener la distribución empírica de los montos acumulados de los siniestros 
+Los pasos son:
+
+1. **Aplicar Chain Ladder Clásico:** se calculan los factores de desarrollo y las estimaciones de siniestros acumulados
+
+2. **Calcular Residuos de Pearson:** Los residuos miden la discrepancia entre los datos observados y los estimados por el modelo. Para siniestros incrementales
+
+$$
+residual_{i,j} = \frac{X_{i,j}- \hat{X}_{i,j}}{\hat{\sigma}_j}
+$$
+donde 
+
+$$
+\hat{\sigma_{j}} = \sqrt{\frac{\sum_{r=1}^{n+1-j}(X_{r,j}-\hat{X}_{r,j})}{n-j}}
+$$
+
+3. **Remuestreo de los residuos (Bootstrap)**
+Remuestreo con reemplazo los residuales para generar nuevos residuales. Se reconstruyen los siniestros incrementales con
+
+$$
+X_{i,j}^{\text{pseudo pasado}} = residual_{i,j}^{\text{remuestreo}}\hat{\sigma_j} + \hat{X}_{i,j}
+$$
+
+4. **Se reconstruye el nuevo triángulo con los nuevos siniestros**
+
+5. **Calcular los factores de desarrollo**
+
+6. **Repetir y construir la distribución **
+
+
+
+
+### Modelo de Mack
+
+
+A diferencia del Bootstrap, Mack no asume distribuciones específicas para los datos y se basa en propiedades estadísticas analíticas. Extiende el Chain Ladder determinístico incorporando estimaciones de error de predicción (MSE - Mean Squared Error)
+
+Se asume que:
+
+* Existen independencia entre los años de ocurrencia
+* la varianza es proporcional 
+
+

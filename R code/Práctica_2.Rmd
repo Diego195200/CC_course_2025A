@@ -3,8 +3,8 @@ title: "Practica 2"
 author: "Diego Isau Barranco Herrera"
 date: "2025-02-28"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}

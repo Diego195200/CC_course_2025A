@@ -3,20 +3,6 @@
   <component name="Black">
     <option name="sdkName" value="datascience" />
   </component>
-  <component name="MaterialThemeProjectNewConfig">
-    <option name="metadata">
-      <MTProjectMetadataState>
-        <option name="migrated" value="true" />
-        <option name="pristineConfig" value="false" />
-        <option name="userId" value="41936d28:19433edc288:-7ffe" />
-      </MTProjectMetadataState>
-    </option>
-    <option name="titleBarState">
-      <MTProjectTitleBarConfigState>
-        <option name="overrideColor" value="false" />
-      </MTProjectTitleBarConfigState>
-    </option>
-  </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="datascience" project-jdk-type="Python SDK" />
   <component name="RMarkdownSettings">
     <option name="renderProfiles">
@@ -25,6 +11,20 @@
           <value>
             <RMarkdownRenderProfile>
               <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/R code" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/project/ibnr comparison.rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/project" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/project/ibnr_comparison.rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/project" />
             </RMarkdownRenderProfile>
           </value>
         </entry>

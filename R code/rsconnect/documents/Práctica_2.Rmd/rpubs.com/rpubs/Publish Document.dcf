@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/1278806/f34f822d84584d7a9e11c9d1091319da
+bundleId: https://api.rpubs.com/api/v1/document/1278806/f34f822d84584d7a9e11c9d1091319da
+url: http://rpubs.com/DiegoBH/1278806/edit
+version: 1
