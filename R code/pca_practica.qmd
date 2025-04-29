@@ -1,0 +1,281 @@
+---
+title: "PCA"
+author: "Diego Isau Barranco Herrera"
+format: pdf
+editor: visual
+---
+
+```{r}
+#| include: false
+library(pacman)
+p_load(psych, readxl, dplyr, factoextra)
+```
+
+## Principal Component Analysis (PCA)
+
+El PCA es una técnica de reducción de dimensión. A través de combinaciones lineales de las variables involucradas podemos reducir la cantidad de estas, siempre y cuando no se pierda información, esto es, tener como mínimo una varianza acumulada del 70% entre todos los componentes
+
+## Población USA
+
+Tenemos 19 variables independientes, vamos a separar por año para realizar el PCA
+
+```{r}
+poblacion <- read_xlsx("Covid.xlsm")
+```
+
+### PCA para el año 2000
+
+```{r}
+poblacion_2000 <- poblacion %>% select(c(2,3,5,7,9,11,13,15,17,19))
+
+# normalizando datos
+poblacion_2000_normal <- scale(poblacion_2000)
+
+# Correlación
+det(cor(poblacion_2000_normal))
+
+
+```
+
+La correlación tiende a cero, por lo que es adecuado
+
+Ahora vamos a verificar el Factor de adecuación muestral de Kaiser, el cual nos indica si las variables son aptas para realizar el PCA
+
+```{r}
+#| warning: false
+psych::KMO(poblacion_2000_normal)
+```
+
+Tenemos un MSA de 0.5, por lo que es una métrica útil y es pertinente hacer el PCA
+
+Verificaremos cuántos componentes son adecuados para que tengamos mínimo una acumualción del 70% de la varianza
+
+```{r}
+pca_pob_2000 <- princomp(poblacion_2000_normal)
+summary(pca_pob_2000)
+```
+
+Gráficamente
+
+```{r}
+fviz_eig(pca_pob_2000, choice='variance')
+```
+
+```{r}
+fviz_eig(pca_pob_2000, choice ='eigenvalue')
+```
+
+Con dos componentes se acumula el 87% de la varianza. Además se cumple que el eigenvalue de los dos componentes sea mayor a 1
+
+Veamos cuánto contribuye cada variable a los diferentes componentes principales
+
+```{r}
+fviz_pca_ind(pca_pob_2000,
+             col.ind = 'cos2',
+gradient.cols = c('red', 'yellow', 'green'),
+             repel = FALSE)
+```
+
+La mayoria de las observaciones se adecuan a dos dimensiones
+
+Veamos cuánto contribuye cada variable a los diferentes componentes principales
+
+```{r}
+fviz_pca_var(pca_pob_2000, col.var = 'contrib', 
+             gradient.cols = c('red', 'yellow', 'green'), 
+             repel = FALSE)
+```
+
+```{r}
+fviz_pca_biplot(pca_pob_2000, col.var='red', col.ind = 'blue')
+```
+
+Los componentes contribuyen en diferente medida a los cuadrantes dentro de la representación bidimensional
+
+Haciendo el PCA con dos componentes
+
+```{r}
+pca2 <- psych::principal(poblacion_2000_normal, nfactors=2, 
+                         residuals=FALSE, rotate="varimax", 
+                         scores=TRUE, oblique.scores=FALSE, 
+                         method='regression', use='pairwise', 
+                         cor='cor', weight=NULL)
+
+pca2
+```
+
+Dos componentes son suficientes para explicar la mayor parte de la variabilidad (**88%**), con un ajuste estadísticamente sólido. El primer componente domina en importancia, pero el segundo aporta información complementaria. Este modelo es válido para reducir la dimensionalidad de los datos sin perder información crítica.
+
+### PCA para el año 2001
+
+Se realzará el mismo procecimiento que en el año 2000 y al final se darán las interpretaciones
+
+```{r}
+poblacion_2001 <- poblacion %>% select(c(4,6,8,10,12,14,16,18,20))
+
+# normalizando datos
+poblacion_2001_normal <- scale(poblacion_2001)
+
+# Correlación
+det(cor(poblacion_2001_normal))  # La correlación tiende a cero
+
+#psych::cor.plot(poblacion_2000_normal)
+```
+
+La correlación tiende a cero, por lo que es adecuado
+
+Ahora vamos a verificar el Factor de adecuación muestral de Kaiser
+
+```{r}
+#| message: false
+#| warning: false
+psych::KMO(poblacion_2001_normal)
+```
+
+```{r}
+pca_pob_2001 <- princomp(poblacion_2001_normal)
+summary(pca_pob_2001)
+```
+
+Gráficamente
+
+```{r}
+fviz_eig(pca_pob_2001, choice='variance')
+```
+
+```{r}
+fviz_eig(pca_pob_2001, choice ='eigenvalue')
+```
+
+Con dos componentes se acumula el 89% de la varianza. Además se cumple que el eigenvalue de los dos componentes sea mayor a 1
+
+```{r}
+# Grafico de las puntuaciones factoriales y su representación
+fviz_pca_ind(pca_pob_2001,
+             col.ind = 'cos2',gradient.cols = c('red', 'yellow', 'green'),
+             repel = FALSE)
+```
+
+La mayoria de las observaciones se adecuan a dos dimensiones
+
+Veamos cuánto contribuye cada variable a los diferentes componentes principales
+
+```{r}
+# cuanto contribuye a cada variable
+fviz_pca_var(pca_pob_2001, col.var = 'contrib', 
+             gradient.cols = c('red', 'yellow', 'green'), 
+             repel = FALSE)
+```
+
+```{r}
+fviz_pca_biplot(pca_pob_2001, col.var='red', col.ind = 'blue')
+```
+
+Ahora haremos el PCA con dos componentes
+
+```{r}
+pca2 <- psych::principal(poblacion_2001_normal, nfactors=2, 
+                         residuals=FALSE, rotate="varimax", 
+                         scores=TRUE, oblique.scores=FALSE, 
+                         method='regression', use='pairwise', 
+                         cor='cor', weight=NULL)
+
+pca2
+```
+
+Igualemnte, dos componentes son altamente suficientes, explicando el **90%** de la varianza con un ajuste estadístico muy bueno. El segundo componente gana relevancia en 2001, lo que podría indicar cambios en la estructura subyacente de los datos o una mejor captura de variables. El modelo es óptimo para reducir dimensionalidad sin pérdida
+crítica de información.
+
+Comparando los años
+
+-   Mayor varianza acumulada (90% vs 88%) y mejor distribución entre componentes (RC2 explica 20% vs 14% en 2000).
+
+-   Estadísticos de ajuste mejorados (RMSR más bajo, chi-cuadrado menor y p-valor más alto).
+
+# data_pca
+
+```{r}
+data_pca <- read.csv2("data_pca.csv")
+
+# normalizar datos
+data_normal <- scale(data_pca[,-16])
+```
+
+Veamos las estadísticas básicas para determinar si es viable realizar el PCA
+
+```{r}
+# determinante de correlación
+det(cor(data_normal))  # La correlación tiende a cero
+
+# Factor de adecuación muestral de kaiser
+psych::KMO(data_normal)  #
+
+```
+
+Tenemos un MSA de 0.34, es muy bajo por lo que no se recomienda PCA, sin embargo procedemos con el ejercicio
+
+```{r}
+pca <- princomp(data_normal)
+summary(pca)
+
+```
+
+Vamos a considerar 6 componentes, donde hay una acumulación de varianza del 70%, como se puede apreciar en las siguientes gráficas. A el igual que se hasta el componente 6 el eigenvalue es mayor a 1
+
+```{r}
+# grafica de eigenvalores y varianza
+fviz_eig(pca, choice='variance')
+```
+
+```{r}
+fviz_eig(pca, choice ='eigenvalue')
+```
+
+Sus puntuaciones factoriales
+
+```{r}
+# Grafico de las puntuaciones factoriales y su representación
+fviz_pca_ind(pca,
+             col.ind = 'cos2',
+             gradient.cols = c('red', 'yellow', 'green'),
+             repel = FALSE)
+```
+
+Existe una gran cantidad de datos no bien representados correctamente
+
+Veamos las cargas
+
+```{r}
+fviz_pca_var(pca, col.var = 'contrib', 
+             gradient.cols = c('red', 'yellow', 'green'), 
+             repel = FALSE)
+```
+
+Las variables cercanas a los extremos de los ejes (RC1 o RC2) son las más influyentes en ese componente. Por ejemplo, una variable en la esquina superior derecha contribuye fuertemente a RC1.
+
+```{r}
+fviz_pca_biplot(pca, col.var='red', col.ind = 'blue')
+```
+
+Respecto a las variables, su dirección y longitud indican su influencia en los componentes. Si una variable apunta hacia un grupo de observaciones, esas observaciones tienen valores altos en esa variable.
+
+Realizamos el PCA con el número de componentes seguridos
+
+```{r}
+# PCA con 6 componentes
+
+pca_6comp <- psych::principal(data_normal, nfactors = 6, 
+                              residuals=FALSE, rotate="varimax", 
+                              scores=TRUE, oblique.scores=FALSE, 
+                              method='regression', use='pairwise',
+                              cor='cor', weight=NULL)
+pca_6comp
+```
+
+Los 6 componentes capturan **70%** de la varianza total, significativamente menor que el**88-90%** logrado con solo 2 componentes en análisis previos. Esto sugiere pérdida de eficiencia al incluir más componentes.
+
+El p-value rechaza fuertemente la hipótesis de que 6 componentes son suficientes. Los residuos no son aleatorios, sugiriendo que el modelo no captura toda la estructura subyacente
+
+::: callout-important
+\[Link de GitHub\](<https://github.com/Diego195200/CC_course_2025A/tree/main/R%20code>)
+:::

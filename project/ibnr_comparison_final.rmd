@@ -544,7 +544,7 @@ Se trata de un siniestro ocurrido a una plataforma petrolera debido a un corto c
 
 
 
-* ¿Cúales son 10 los giros con más siniestros, y cual el de menos?
+* ¿Cúales son 10 los giros con más siniestros?
 
 ```{r}
 group_siniestros <- siniestros %>% 
@@ -570,7 +570,7 @@ ggplot(group_siniestros, aes(x = reorder(GIRO, n), y = n, fill = GIRO)) +
 ```
 
 
-* ¿Cúal es la entidad con más siniestros, y cual el de menos?
+* ¿Cúal es la entidad con más siniestros?
 ```{r}
 group_entidad <- siniestros %>% 
   group_by(ENTIDAD) %>% 

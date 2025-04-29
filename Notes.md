@@ -18,7 +18,7 @@ En el campo actuarial el cómputo cientifico es esencial para:
 
 ### Campo financiero
 
-* **Analsis de datos financieros**: Permite analizar grandes volumenes de datos financieros para identificar tendencias y patrones
+* **Analisis de datos financieros**: Permite analizar grandes volumenes de datos financieros para identificar tendencias y patrones
 * **Modelos financieros** ayuda a desarrollar modelos para la valoración de activos, la gestión de riesgos y la predicción de precios
 *  **Trading algoritmico**: Facilita la implementación de estrategias de trading automatizados basado en algoritmos complejos
 
@@ -69,11 +69,11 @@ indicar posibles errores (datos incorrectamente introducidos, detectar la ausenc
 
 **Pasos**:
 
-Se puede dividir en 3 grandes pasos y estos a su vez se subdividen en muchsa tareas que se deben realizar para empezar a interpretar los resultados
+Se puede dividir en 3 grandes pasos y estos a su vez se subdividen en muchas tareas que se deben realizar para empezar a interpretar los resultados
 
-* Carga de los datos
+1. Carga de los datos
 
-* Limpieza de datos: Eliminar duplicados, tratar valores nulos, verificar tipos de datos
+2. Limpieza de datos: Eliminar duplicados, tratar valores nulos, verificar tipos de datos
 
 	Registros duplicados. si hay un registro repetido 10 veces y el modelo se equivoca en su predicción, se estará equivocando
    10 veces por un solo registro. En algunos casos puede hacerse *oversampling* 

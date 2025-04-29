@@ -4,10 +4,27 @@
     <option name="sdkName" value="datascience" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="datascience" project-jdk-type="Python SDK" />
+  <component name="PyCharmDSProjectLayout">
+    <option name="id" value="JupyterRightHiddenStructureLayout" />
+  </component>
   <component name="RMarkdownSettings">
     <option name="renderProfiles">
       <map>
         <entry key="file://$PROJECT_DIR$/R code/Práctica_2.Rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/R code" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/R code/examen_1p.rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/R code" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/R code/guide.rmd">
           <value>
             <RMarkdownRenderProfile>
               <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/R code" />

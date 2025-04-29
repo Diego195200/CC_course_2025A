@@ -1,1 +1,0 @@
-auto_no_header <- read.csv('/var/home/diegob/Documents/Computer Science/R code/auto-mpg-noheader.csv',header = FALSE, sep = ",", dec = ".")

@@ -1,0 +1,171 @@
+---
+title: "R Notebook"
+output: html_document
+---
+```{r}
+library(skimr)  # for summary statistics
+library(visdat)  # some graphic tools
+library(dplyr)
+library(modeest)
+library(janitor)
+```
+
+importing datasets
+
+```{r}
+data <- read.csv('name.csv', na.strings = c("null", "**"), stringsAsFactors = FALSE)
+```
+
+view datatypes
+```{r}
+glimpse(data)
+```
+
+view missing data
+
+```{r}
+# para verificar si hay datos faltantes
+any(is.na(dataCar))  # how many nas
+which(is.na(dataCar), arr.ind=TRUE) # how many nas by column
+#visualizar si hay datos faltantes
+vis_miss(dataCar)
+
+# another approach
+dataCar %>%
+  summarise_all(~sum(is.na(.)))
+# conocer las posiciones de una columna
+which(is.na(dataCar$veh_value))
+# para todo el data frame
+which(is.na(dataCar), arr.ind = TRUE)  # arr.ind: index de los NA
+
+# ommiting data
+
+newdata <- data %>% na.omit()
+
+```
+
+Summary statistics
+```{r}
+skim(data)
+```
+
+Group by
+```{r}
+data %>%
+  group_by(column) %>%
+  summarise(col_name=operation(column)) %>%
+  arrange(desc(numclaims))
+```
+
+Graphics
+```{r}
+ggplot(data, aes(x = column, y = column)) +
+  geom_bar(stat= "identity", fill = "blue", color = "black") +
+  labs(title = "Número de reclamaciones por tipo de vehiculo", x="Tipo de vehiculo", y="Total de reclamaciones")+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle=45, hjust=1))
+```
+
+Filter data
+```{r}
+filter(data, data$column == condition)
+
+```
+
+Filling values
+```{r}
+data_mean <- data.frame(lapply(data, function (x) ifelse(is.na(x), mean(x, na.rm=TRUE), x)))
+
+data_median <- data.frame(lapply(data, function (x) ifelse(is.na(x), median(x, na.rm=TRUE), x)))
+
+data_median_cut <- data.frame(lapply(data, function (x) ifelse(is.na(x), mean(x, na.rm=TRUE, trim = 0.2), x)))
+
+data_mode <-  data.frame(lapply(data, function (x) ifelse(is.na(x), mfv(x, na_rm=TRUE, trim = 0.1), x)))
+
+data_interpol <- data.frame(lapply(data, function (x) ifelse(is.na(x), na.approx(x, na.rm=T), x)))
+
+# Regression
+
+just_complete <- data_numeric %>% na.omit()
+model <- lm(y ~ x1+x2+..., data = just_complete, na.action = na.exclude)
+
+# Step 2: Identify rows with missing 'y'
+missing <- is.na(data_numeric$imc)
+
+# Step 3: Predict missing values using the model
+data_numeric$imc[missing] <- predict(model, newdata = data_numeric[missing, ])
+
+
+```
+
+selecting
+```{r}
+# select specific data types
+starw <- starwars %>%
+  select(name, where(is.numeric))
+
+
+```
+
+distintos y duplicados
+```{r}
+dataCar %>%
+  janitor::get_dupes()
+
+# remove duplicates
+
+dataCar1 <- dataCar %>%
+  distinct()
+```
+
+correlaciones
+```{r}
+# correlación de todas las variables numericas
+data_num <- data %>%
+  select(where(is.numeric))
+
+cor(data_num)
+
+numericas <- data[, sapply(data, is.numeric)]
+cor_matrix <- cor(numericas)
+# grafico correlacion
+corrplot(cor_matrix, method='shade')
+```
+
+Anova
+```{r}
+aov_result <- aov(y ~ x, data=data)
+summary(aov_result)
+# medias iguales no me interesan, que sean diferentes
+```
+
+Tabla cont
+```{r}
+tabla_contingencia <- credito %>%  # pipe shortcut ctrl + shift + m
+  tabyl(EstadoCivil, Estado) %>%  # tabyl is a janitor function for contingency tables
+  adorn_totals('row')  %>%  # añadir totales por fila
+  adorn_percentages('row') %>% # calcular porcentajes por fila
+  adorn_pct_formatting(digits = 1)  # Formato para un decimal
+```
+```{r}
+# PCA
+# Reduce el numero de dimensiones de grandes cnjuntos de datos (variables numericas)
+# Componentes principales que conservan la mayor parte de la información general
+# Ayuda a redcir la complejidad de los modelos
+# 80-90% de la varianza
+
+
+# Pasos
+# Estandarizar variables
+cred_num_estand <- scale(cred_num)
+
+# Realizar PCA
+pca <- prcomp(cred_num_estand, center=TRUE, scale. = TRUE)
+
+#Summary
+summary(pca)
+
+# Grafico de scree plot para ver la varianza explicada por cada componente
+fviz_eig(pca)
+```
+

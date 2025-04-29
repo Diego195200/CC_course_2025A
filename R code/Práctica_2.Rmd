@@ -126,6 +126,19 @@ summary(data_interpol)
 
 La mediana podría ser candidata como técnica de reemplazo porque no difiere mucho de los datos originales
 
+# Experiment using linear regression
+
+```{r}
+just_complete <- data_numeric %>% na.omit()
+model <- lm(imc ~ edad+hijos+clm, data = just_complete, na.action = na.exclude)
+
+# Step 2: Identify rows with missing 'y'
+missing <- is.na(data_numeric$imc)
+
+# Step 3: Predict missing values using the model
+data_numeric$imc[missing] <- predict(model, newdata = data_numeric[missing, ])
+```
+
 # Usando la base con interpolación
 
 ```{r}
